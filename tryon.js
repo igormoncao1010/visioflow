@@ -1,4 +1,4 @@
-const tryonRoute = location.pathname.replace(/\/$/, '') === '/experimentar';
+const tryonRoute = isCustomerTryon;
 const tryonToken = new URLSearchParams(location.hash.slice(1)).get('chave');
 const tryonRpc = (operation, frame = null) =>
   sbRequest('/rest/v1/rpc/vf_tryon_customer', { operation, link_token: tryonToken, frame }, false);
@@ -236,9 +236,12 @@ function catalogPage() {
       ['CLIENTE','ARMAÇÃO','DATA'], requests || '<tr><td colspan="3">Nenhum pedido recebido.</td></tr>');
 }
 
-async function createTryonUrl(id) {
-  const token = await catalogRpc('link', {id});
-  const link = new URL('/experimentar', location.origin);
+async function createTryonUrl(id, quoteId) {
+  const payload = {id};
+  if (quoteId) payload.quote_id = quoteId;
+  const token = await catalogRpc('link', payload);
+  const link = new URL('/', location.origin);
+  link.searchParams.set('provador', '1');
   link.hash = new URLSearchParams({chave:token}).toString();
   return link.href;
 }

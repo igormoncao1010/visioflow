@@ -1,4 +1,8 @@
 {
   "cleanUrls": true,
-  "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
+  "rewrites": [
+    { "source": "/experimentar", "destination": "/index.html" },
+    { "source": "/provador", "destination": "/index.html" },
+    { "source": "/acesso/:perfil", "destination": "/index.html" }
+  ]
 }

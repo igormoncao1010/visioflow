@@ -98,7 +98,7 @@ async function showQuoteMessage(id){
   const modalTitle = $('#modalTitle');
   const stillOpen = () => !$('#modalBackdrop').hidden && $('#modalTitle') === modalTitle;
   try {
-    const link = await createTryonUrl(client.id);
+    const link = await createTryonUrl(client.id, rx.id);
     if (!stillOpen()) return;
     const message = [
       `Olá, ${client.name}! Segue o seu orçamento.`,
@@ -129,7 +129,8 @@ async function startSupabase(){
   renderAuth(target);
   if(sbSession){try{await reloadDatabase();if(target&&target!==sbProfile.role)throw new Error('Entre com a conta deste painel.');$('#authGate').hidden=true}catch(error){$('#authError').textContent=error.message;$('#authError').hidden=false;sbSession=null;sessionStorage.removeItem('vf-auth')}}
 }
-const isCustomerTryon = location.pathname.replace(/\/$/, '') === '/experimentar';
+const isCustomerTryon = ['/experimentar', '/experimentar.html', '/provador'].includes(location.pathname.replace(/\/$/, '')) ||
+  new URLSearchParams(location.search).get('provador') === '1';
 if (!isCustomerTryon) startSupabase();
 // Poll only while signed in and visible; notifications arrive across devices.
 if (!isCustomerTryon) setInterval(()=>{if(sbSession&&!sbBusy&&!document.hidden&&page!=='tryonCatalog')reloadDatabase().catch(e=>{ $('.live-pill').textContent='Falha na sincronização'; });},15000);

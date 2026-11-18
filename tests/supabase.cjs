@@ -4,7 +4,7 @@ function node(key){if(!nodes.has(key))nodes.set(key,{style:{},dataset:{},classLi
 const data=new Map();const storage={getItem:k=>data.get(k)||null,setItem:(k,v)=>data.set(k,v),removeItem:k=>data.delete(k)};
 let failure=false;const requests=[];
 const snapshot={profile:{id:'profile-id',role:'clinic',name:'Clínica real'},clients:[],prescriptions:[],notifications:[],payments:[]};
-const ctx=vm.createContext({console,structuredClone,Intl,Date,Math,URL,Blob,JSON,Number,String,Array,Object,FormData,localStorage:storage,sessionStorage:storage,document:{querySelector:node,querySelectorAll:()=>[],addEventListener(){},createElement:()=>node('new')},location:{pathname:'/',origin:'https://test.example',assign(){}},window:{scrollTo(){},addEventListener(){},print(){},open(){}},navigator:{},setTimeout(){},setInterval(){},fetch:async(url,options)=>{requests.push({url,options});return {ok:!failure,json:async()=>failure?{message:'permission denied'}:structuredClone(snapshot)}}});
+const ctx=vm.createContext({console,structuredClone,Intl,Date,Math,URL,URLSearchParams,Blob,JSON,Number,String,Array,Object,FormData,localStorage:storage,sessionStorage:storage,document:{querySelector:node,querySelectorAll:()=>[],addEventListener(){},createElement:()=>node('new')},location:{pathname:'/',origin:'https://test.example',assign(){}},window:{scrollTo(){},addEventListener(){},print(){},open(){}},navigator:{},setTimeout(){},setInterval(){},fetch:async(url,options)=>{requests.push({url,options});return {ok:!failure,json:async()=>failure?{message:'permission denied'}:structuredClone(snapshot)}}});
 for(const path of ['app.js','workflows.js','supabase-config.js','supabase-live.js'])vm.runInContext(fs.readFileSync(path,'utf8'),ctx);
 const run=s=>vm.runInContext(s,ctx);
 (async()=>{
