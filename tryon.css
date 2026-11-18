@@ -1,0 +1,18 @@
+.auth-gate.tryon-gate:not([hidden]) {display:block; overflow:auto; background:#eef3ef;}
+.tryon-panel {max-width:640px; margin:24px auto; padding:24px; background:#fff; border-radius:16px;}
+.tryon-panel h1 {margin:4px 0 12px; font:800 28px Manrope,sans-serif;}
+.tryon-panel .field {margin:12px 0;}
+.tryon-panel button:disabled {opacity:.55; cursor:default;}
+.tryon-panel button[hidden], .tryon-stage [hidden] {display:none;}
+.tryon-stage {position:relative; margin:12px auto; width:fit-content; max-width:100%;}
+.tryon-stage video, .tryon-stage canvas {display:block; max-width:100%; max-height:56vh; border-radius:12px;}
+.tryon-stage video {transform:scaleX(-1);}
+#faceGuide {position:absolute; top:10%; left:26%; width:48%; height:80%; border:2px solid #fff; border-radius:48%; box-shadow:0 0 0 1px #174f40; pointer-events:none;}
+#faceGuide::after {content:''; position:absolute; top:40%; left:8%; right:8%; border-top:2px dashed #fff;}
+.tryon-actions {display:flex; flex-wrap:wrap; gap:8px;}
+.tryon-file {position:relative; overflow:hidden;}
+.tryon-file:focus-within {outline:2px solid #206652; outline-offset:2px;}
+.tryon-file input {position:absolute; inset:0; width:100%; opacity:0; cursor:pointer;}
+.frame-preview {max-width:100%; height:auto; cursor:crosshair; background:#edf2ee;}
+.quote-message-preview {white-space:pre-wrap; overflow-wrap:anywhere; font:inherit;}
+@media(max-width:650px) {.tryon-panel {margin:0; min-height:100%; padding:20px; border-radius:0;}}

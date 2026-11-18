@@ -16,6 +16,12 @@ A senha inicial foi definida durante a ativação e não está gravada no códig
 
 ## Operações conectadas
 
+Para usar o provador, entre como ótica e abra **Catálogo do provador → Cadastrar armação**. Selecione uma das imagens da pasta `provador` ou envie um PNG/WebP com fundo transparente. Preencha a referência e a largura total real em milímetros e marque a ponte na imagem. Depois gere o link do cliente e compartilhe. Os links valem 14 dias e podem ser gerados novamente quando expiram. A instituição e a clínica também podem copiar o link pelos detalhes do cliente.
+
+Ao salvar um orçamento, **Abrir WhatsApp** prepara a mensagem com valor, prazo, pagamento e o link individual do provador. Para reenviar um orçamento salvo, use **Enviar orçamento e provador** em **Orçamentos**. Confirme o envio no WhatsApp.
+
+O cliente pode tirar uma selfie com o molde ou escolher uma foto frontal. A foto é processada no navegador e o botão **Quero esta armação** registra somente a escolha no Supabase. A ótica recebe a notificação e pode consultar o cliente e a referência em **Pedidos do provador**.
+
 Cadastro, validação, receita, orçamento, produção, entrega, notificações, leitura de repasses e exclusão administrativa usam RPCs autenticados. A rota instituição → clínica → ótica está cadastrada em vf_routes. O banco determina o papel e limita os registros aos envolvidos. A instituição acompanha status e valor, sem os campos clínicos da receita. RLS está ativo e o acesso direto às tabelas está revogado para anon/authenticated.
 
 Atualizações são consultadas a cada 15 segundos enquanto a aba estiver visível. A sessão fica no sessionStorage; dados clínicos ficam em memória. Uma falha não aciona modo de demonstração. Gravações só são confirmadas depois da resposta do banco.

@@ -62,7 +62,7 @@ function remoteForm(original,operation,payloadFor){return function(...args){
         if(!payload)return;
         await command(operation,payload);closeModal();notify('Salvo no Supabase.');
         if(operation==='create'){const client=state.clients.find(c=>c.name===payload.name&&c.phone===payload.phone);if(client)showVoucher(client)}
-        if(operation==='quote')showQuoteMessage(payload.id);
+        if(operation==='quote')await showQuoteMessage(payload.id);
       }catch(error){notify(error.message)}
     }:callback);
   };
@@ -85,11 +85,41 @@ $('#content').addEventListener('click',event=>{
   event.preventDefault();event.stopImmediatePropagation();
   command('pay',{id:payment.id}).then(()=>notify('Repasse registrado no banco.')).catch(e=>notify(e.message));
 },true);
-function showQuoteMessage(id){
-  const rx=state.prescriptions.find(p=>p.id===id),client=state.clients.find(c=>c.code===rx.code);
-  const phone=client.phone.replace(/\D/g,'');
-  const message=`Olá, ${client.name}! Orçamento: ${money(rx.quote)}. Lente: ${rx.eye}. Prazo: ${rx.delivery}. Pagamento: ${rx.payment}. ${rx.quoteNotes||''}`;
-  openModal('Orçamento salvo','Abra o WhatsApp para revisar e enviar a mensagem.',`<p>${esc(message)}</p><a class="button primary" target="_blank" rel="noopener" href="https://wa.me/${phone.length<=11?'55':''}${phone}?text=${encodeURIComponent(message)}">Abrir WhatsApp</a>`,'Fechar');
+async function showQuoteMessage(id){
+  const rx = state.prescriptions.find(item => item.id === id);
+  const client = rx && state.clients.find(item => item.code === rx.code);
+  const phone = client?.phone?.replace(/\D/g,'');
+  if (!phone || !rx.quote) {
+    notify('Confira o telefone do cliente e o valor do orçamento.');
+    return;
+  }
+
+  openModal('Enviar orçamento', 'Gerando o link do provador…', '', 'Fechar');
+  const modalTitle = $('#modalTitle');
+  const stillOpen = () => !$('#modalBackdrop').hidden && $('#modalTitle') === modalTitle;
+  try {
+    const link = await createTryonUrl(client.id);
+    if (!stillOpen()) return;
+    const message = [
+      `Olá, ${client.name}! Segue o seu orçamento.`,
+      `Valor: ${money(rx.quote)}`,
+      `Lente: ${rx.eye}`,
+      rx.delivery && `Prazo: ${rx.delivery}`,
+      rx.payment && `Pagamento: ${rx.payment}`,
+      rx.quoteNotes,
+      '',
+      'Experimente as armações pelo celular e toque em “Quero esta armação” para enviar sua escolha à ótica:',
+      link
+    ].filter(line => line !== null && line !== undefined && line !== false).join('\n');
+    const whatsapp = `https://wa.me/${phone.length<=11?'55':''}${phone}?text=${encodeURIComponent(message)}`;
+    openModal('Enviar orçamento e provador', 'Revise a mensagem e confirme o envio no WhatsApp.',
+      `<pre class="quote-message-preview">${esc(message.replace(link,'[link individual do provador]'))}</pre><a class="button primary" target="_blank" rel="noopener" href="${esc(whatsapp)}">Abrir WhatsApp</a>`, 'Fechar');
+  } catch (error) {
+    if (!stillOpen()) return;
+    openModal('Orçamento salvo', 'O link do provador ainda não foi gerado.',
+      `<p role="alert">${esc(error.message)}</p><button class="button primary" id="retryQuoteShare">Tentar novamente</button>`, 'Fechar');
+    $('#retryQuoteShare').onclick = () => showQuoteMessage(id);
+  }
 }
 $('#logoutButton').onclick=async()=>{try{await sbRequest('/auth/v1/logout',{})}catch{}sbSession=null;sessionStorage.removeItem('vf-auth');state={clients:[],prescriptions:[],notifications:[],payments:[]};location.assign('/')};
 $('.live-pill').textContent='Supabase';
@@ -99,9 +129,10 @@ async function startSupabase(){
   renderAuth(target);
   if(sbSession){try{await reloadDatabase();if(target&&target!==sbProfile.role)throw new Error('Entre com a conta deste painel.');$('#authGate').hidden=true}catch(error){$('#authError').textContent=error.message;$('#authError').hidden=false;sbSession=null;sessionStorage.removeItem('vf-auth')}}
 }
-startSupabase();
+const isCustomerTryon = location.pathname.replace(/\/$/, '') === '/experimentar';
+if (!isCustomerTryon) startSupabase();
 // Poll only while signed in and visible; notifications arrive across devices.
-setInterval(()=>{if(sbSession&&!sbBusy&&!document.hidden)reloadDatabase().catch(e=>{ $('.live-pill').textContent='Falha na sincronização'; });},15000);
+if (!isCustomerTryon) setInterval(()=>{if(sbSession&&!sbBusy&&!document.hidden&&page!=='tryonCatalog')reloadDatabase().catch(e=>{ $('.live-pill').textContent='Falha na sincronização'; });},15000);
 
 usersPage=function(){return heading('Links dos painéis','O papel de cada usuário é definido no banco pelo administrador.')+`<div class="access-grid">${demoAccounts.map(a=>`<section class="access-card"><h3>${esc(a.label)}</h3><p>Entre com a conta cadastrada no Supabase Auth.</p><input readonly value="${esc(location.origin+'/acesso/'+a.slug)}" aria-label="Link de ${esc(a.label)}"><button class="button" data-portal-url="${esc(location.origin+'/acesso/'+a.slug)}">Copiar link</button></section>`).join('')}</div>`};
 $('#content').addEventListener('click',event=>{const button=event.target.closest('[data-portal-url]');if(button)copyValue(button.dataset.portalUrl)});
