@@ -5,6 +5,27 @@ const tryonRpc = (operation, frame = null) =>
 const catalogRpc = (operation, payload = {}) =>
   sbRequest('/rest/v1/rpc/vf_tryon_manage', { operation, payload });
 
+function editFrame(frame) {
+  if (!frame) return;
+  openModal('Editar armação', 'Ajuste a referência e a escala do provador.',
+    '<form id="modalForm" class="form-grid">' +
+    '<label class="field">Referência<input name="sku" required maxlength="60" value="'+esc(frame.sku)+'"></label>' +
+    '<label class="field">Modelo<input name="name" required maxlength="120" value="'+esc(frame.name)+'"></label>' +
+    '<label class="field">Largura total em mm<input name="width_mm" type="number" min="80" max="200" step="0.1" required value="'+frame.width_mm+'"></label>' +
+    '<label class="field">Ponte horizontal (0 a 1)<input name="bridge_x" type="number" min="0" max="1" step=".01" required value="'+frame.bridge_x+'"></label>' +
+    '<label class="field">Ponte vertical (0 a 1)<input name="bridge_y" type="number" min="0" max="1" step=".01" required value="'+frame.bridge_y+'"></label></form>',
+    'Salvar alterações', async form => {
+      const button = $('#modal button[type=submit]');
+      button.disabled = true;
+      try {
+        catalogData = await catalogRpc('edit',{id:frame.id,...Object.fromEntries(form)});
+        closeModal();
+        if (page==='tryonCatalog') render();
+        notify('Armação atualizada.');
+      } catch (error) { notify(error.message); }
+      finally { button.disabled = false; }
+    });
+}
 let catalogData;
 async function loadFrameCatalog() {
   try {
@@ -198,7 +219,8 @@ function catalogPage() {
   const frames = (catalogData?.frames || []).map(frame =>
     '<tr><td>' + esc(frame.sku) + '</td><td>' + esc(frame.name) + '</td><td>' + esc(frame.width_mm) +
     ' mm</td><td><button class="button" data-frame-id="' + esc(frame.id) + '" data-frame-active="' +
-    !frame.active + '">' + (frame.active ? 'Desativar' : 'Ativar') + '</button></td></tr>').join('');
+    !frame.active + '">' + (frame.active ? 'Desativar' : 'Ativar') + '</button> <button class="button" data-edit-frame="' +
+    esc(frame.id) + '">Editar</button></td></tr>').join('');
   const requests = (catalogData?.requests || []).map(request =>
     '<tr><td>' + esc(request.client + ' · ' + request.code) + '</td><td>' +
     esc(request.sku + ' · ' + request.name) + '</td><td>' + esc(request.date) + '</td></tr>').join('');
@@ -337,6 +359,9 @@ if (!tryonRoute) {
     $('#content').innerHTML = catalogPage();
     $('#refreshFrames').onclick = loadFrameCatalog;
     $('#newFrame').onclick = frameForm;
+    document.querySelectorAll('[data-edit-frame]').forEach(button => {
+      button.onclick = () => editFrame(catalogData.frames.find(frame => frame.id === button.dataset.editFrame));
+    });
     $('#tryonLink').onsubmit = event => {
       event.preventDefault();
       showTryonLink(new FormData(event.currentTarget).get('client'));
