@@ -1,29 +1,34 @@
-# VisioFlow
+# VisioFlow — Supabase ativo
 
-Plataforma de gestão visual para conectar instituições indicadoras, clínicas oftalmológicas, óticas e administração em uma jornada de atendimento.
+O projeto mzeflmnyspgotnpbpqon está configurado. As migrações connected.sql e hardening.sql foram aplicadas em 18/11/2026; as quatro contas foram criadas e confirmadas com Supabase Auth. Não é necessário executar o SQL novamente para usar este projeto.
 
-## O que está pronto
+## Publicar
 
-- Interface responsiva com os quatro espaços de trabalho e navegação específica por perfil.
-- Tela de login de demonstração com contas de instituição, clínica, ótica e administrador.
-- Links dedicados `/acesso/instituicao`, `/acesso/clinica`, `/acesso/otica` e `/acesso/admin`; o administrador gera e copia esses endereços em **Acessos**.
-- Demonstração clicável dos fluxos de indicação com voucher QR/código, validação pela clínica, envio de receita, orçamento e abertura da mensagem de WhatsApp.
-- Visão administrativa de parceiros, indicadores, relatórios e repasses.
-- Ações demonstrativas salvas no `localStorage` do navegador.
-- Esquema inicial para Supabase em `supabase/schema.sql`, com papéis, tabelas, RLS e notificação de validação.
+Envie os arquivos atualizados ao GitHub e publique no Vercel como site estático. A URL e a chave anon pública ficam em supabase-config.js. Nunca inclua service_role no frontend. Arquivos .env não são lidos por este site estático.
 
-## Rodar e publicar
+Entradas:
+- /acesso/instituicao — teste@parceiro.com
+- /acesso/clinica — teste@clinica.com
+- /acesso/otica — teste@otica.com
+- /acesso/admin — igormoncao86@gmail.com
 
-O projeto é estático: abra `index.html` localmente ou importe o repositório no Vercel. Não precisa de build nem dependências. O `vercel.json` mantém as rotas da aplicação apontando para a página inicial.
+A senha inicial foi definida durante a ativação e não está gravada no código. A função temporária de criação foi substituída por um endpoint que retorna 410, sem capacidade administrativa.
 
-Para conectar o banco, execute `supabase/schema.sql` no SQL Editor do projeto Supabase. Depois, configure `SUPABASE_URL` e `SUPABASE_ANON_KEY` como variáveis de ambiente no Vercel. A chave anon/publishable é pública por definição e depende das políticas RLS; **nunca coloque a chave `service_role` no navegador ou em arquivos do frontend**.
+## Operações conectadas
 
-## Próxima etapa de integração
+Cadastro, validação, receita, orçamento, produção, entrega, notificações, leitura de repasses e exclusão administrativa usam RPCs autenticados. A rota instituição → clínica → ótica está cadastrada em vf_routes. O banco determina o papel e limita os registros aos envolvidos. A instituição acompanha status e valor, sem os campos clínicos da receita. RLS está ativo e o acesso direto às tabelas está revogado para anon/authenticated.
 
-**Os logins atualmente são contas de demonstração e as senhas de teste estão verificadas no JavaScript do navegador.** Isso não oferece autenticação nem isolamento de dados seguros. Não use os mesmos logins em produção nem coloque dados reais de pacientes nesta versão. A autenticação real precisa usar Supabase Auth; a criação de usuários e convites pelo administrador deve passar por uma função backend protegida, sem expor `service_role`.
+Atualizações são consultadas a cada 15 segundos enquanto a aba estiver visível. A sessão fica no sessionStorage; dados clínicos ficam em memória. Uma falha não aciona modo de demonstração. Gravações só são confirmadas depois da resposta do banco.
 
-Este primeiro corte é um protótipo de interface: gravação no Supabase, câmera para leitura de QR e disparo automático de mensagens ainda precisam ser ligados aos serviços. O WhatsApp abre uma conversa com texto pronto quando o navegador permite. Para envio automático, use a WhatsApp Business Platform por uma função backend e mantenha tokens de serviço fora do frontend. Para produção, configure recuperação de senha, convite de usuário, logs de auditoria, consentimento e política de retenção para os dados de saúde.
+WhatsApp abre mensagem para envio manual; envio automático não está integrado. Repasses são cadastrados em vf_payments pelo administrador no banco; marcar como pago registra a informação e não transfere dinheiro. Uma receita por indicação é permitida nesta versão.
 
-## Segurança
+## Verificação realizada
 
-O voucher é um identificador e não deve expor receita ou dados clínicos. A receita contém dados sensíveis: compartilhe apenas entre clínica e ótica responsável, proteja o acesso com RLS e evite colocar informações clínicas no QR code ou em mensagens públicas.
+- Login real e leitura autenticada: HTTP 200 para os quatro perfis.
+- Transação no PostgreSQL com rollback: cadastro, isolamento entre instituições, rejeição de validação por instituição, validação única, privacidade da receita, orçamento e entrega.
+- node tests/supabase.cjs: inicialização sem dados locais, JWT nas operações, propagação de falhas e renderização das rotas dos quatro perfis.
+- Verificação de sintaxe dos arquivos JavaScript.
+
+A interface ainda precisa de conferência visual na URL publicada. Os testes de banco foram revertidos, sem cadastrar pacientes de exemplo.
+
+Para reinstalar em outro projeto: execute connected.sql, crie as contas no Auth, ajuste os e-mails e execute bootstrap.sql. hardening.sql fecha helpers anônimos do esquema anterior, se existirem.
